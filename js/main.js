@@ -1,49 +1,4 @@
-// Blog posts data
-const blogPosts = [
-    {
-        id: 1,
-        title: "Breaking: Basketball Player Actually Admits Referee Made Correct Call",
-        excerpt: "In what experts are calling an unprecedented event in professional basketball, power forward Marcus Thompson of the Chicago Bulls openly admitted that a referee's call against him was 'probably fair.'",
-        content: "Full article content...",
-        date: "2024-12-20",
-        category: "Basketball",
-        author: "John Doe",
-        image: "images/posts/basketball-ref.jpg",
-        featured: true
-    },
-    {
-        id: 2,
-        title: "New Study Shows 97% of Fantasy Football Players Think They're 'Just Having Bad Luck'",
-        excerpt: "A groundbreaking study reveals that nearly all fantasy football players believe their 2-11 record is purely due to unfortunate circumstances.",
-        date: "2024-12-19",
-        category: "Football",
-        author: "Jane Smith",
-        image: "images/posts/fantasy-football.jpg",
-        featured: false
-    },
-    {
-        id: 3,
-        title: "Local Dad Sets New World Record for Yelling 'What Are You Doing, Ref?!'",
-        excerpt: "Jerry Thompson of Cincinnati has officially broken the world record for most times shouting at referees during his son's youth soccer game.",
-        date: "2024-12-18",
-        category: "Soccer",
-        author: "Mike Johnson",
-        image: "images/posts/angry-dad.jpg",
-        featured: false
-    },
-    {
-        id: 4,
-        title: "New MLB Rule Change: Players Must Now Explain Their Elaborate Handshakes",
-        excerpt: "Following complaints from parents nationwide, Major League Baseball has instituted a new rule requiring players to provide detailed explanations of their increasingly complex celebration routines.",
-        date: "2024-12-17",
-        category: "Baseball",
-        author: "Sarah Williams",
-        image: "images/posts/baseball-handshake.jpg",
-        featured: false
-    }
-];
-
-// Format date function
+// Function to format dates consistently
 function formatDate(dateString) {
     return new Date(dateString).toLocaleDateString('en-US', {
         year: 'numeric',
@@ -52,7 +7,7 @@ function formatDate(dateString) {
     });
 }
 
-// Create featured post HTML
+// Function to create HTML for the featured post
 function createFeaturedPost(post) {
     const featured = document.getElementById('featured-post');
     featured.innerHTML = `
@@ -62,17 +17,17 @@ function createFeaturedPost(post) {
                 <span class="category-tag">${post.category}</span>
                 <h2>${post.title}</h2>
                 <div class="post-meta">
-                    <span>${formatDate(post.date)}</span> | 
+                    <span>${formatDate(post.date)}</span> | 
                     <span>By ${post.author}</span>
                 </div>
                 <p>${post.excerpt}</p>
-                <a href="posts/${post.id}.html" class="read-more">Read Full Story →</a>
+                <a href="${post.path}" class="read-more">Read Full Story →</a>
             </div>
         </article>
     `;
 }
 
-// Create regular post card HTML
+// Function to create HTML for a regular post card
 function createPostCard(post) {
     return `
         <article class="post-card">
@@ -84,31 +39,78 @@ function createPostCard(post) {
                     <span>${formatDate(post.date)}</span>
                 </div>
                 <p>${post.excerpt}</p>
-                <a href="posts/${post.id}.html" class="read-more">Read More →</a>
+                <a href="${post.path}" class="read-more">Read More →</a>
             </div>
         </article>
     `;
 }
 
-// Initialize the blog
-function initializeBlog() {
-    // Find featured post
-    const featuredPost = blogPosts.find(post => post.featured);
-    if (featuredPost) {
-        createFeaturedPost(featuredPost);
+// Function to initialize the blog
+async function initializeBlog() {
+    const repoOwner = 'lawrence18365'; // Replace with your GitHub username
+    const repoName = 'sportsblog';  // Replace with your repository name
+    const postsDir = 'posts';
+
+    try {
+        const posts = await getPosts(repoOwner, repoName, postsDir);
+
+        // Find featured post (if you have a mechanism to designate a featured post)
+        const featuredPost = posts.find(post => post.featured); // Assuming you add a 'featured' property in your front matter
+        if (featuredPost) {
+            createFeaturedPost(featuredPost);
+        }
+
+        // Get non-featured posts and sort by date
+        const regularPosts = posts
+            .filter(post => !post.featured)
+            .sort((a, b) => new Date(b.date) - new Date(a.date));
+
+        // Populate posts grid
+        const postsGrid = document.getElementById('postsGrid');
+        postsGrid.innerHTML = ''; // Clear existing posts
+        regularPosts.forEach(post => {
+            postsGrid.innerHTML += createPostCard(post);
+        });
+    } catch (error) {
+        console.error('Error initializing blog:', error);
+        document.getElementById('postsGrid').innerHTML = '<p>Error loading posts.</p>';
     }
-
-    // Get non-featured posts and sort by date
-    const regularPosts = blogPosts
-        .filter(post => !post.featured)
-        .sort((a, b) => new Date(b.date) - new Date(a.date));
-
-    // Populate posts grid
-    const postsGrid = document.getElementById('postsGrid');
-    regularPosts.forEach(post => {
-        postsGrid.innerHTML += createPostCard(post);
-    });
 }
 
+// Function to fetch and parse posts from GitHub
+async function getPosts(repoOwner, repoName, postsDir) {
+    const apiUrl = `https://api.github.com/repos/${repoOwner}/${repoName}/contents/${postsDir}`;
+    
+    const response = await fetch(apiUrl);
+    const data = await response.json();
+
+    // Fetch and parse front matter for each post
+    const postsWithMetadata = await Promise.all(data.map(async (post) => {
+        if (!post.name.endsWith('.html')) return null;
+
+        const postUrl = post.download_url;
+        const postResponse = await fetch(postUrl);
+        const postContent = await postResponse.text();
+
+        // Extract front matter using js-yaml
+        const frontMatterMatch = postContent.match(/^---([\s\S]*?)---/);
+        const frontMatter = frontMatterMatch ? jsyaml.load(frontMatterMatch[1]) : {};
+
+        // Get latest commit date for sorting
+        const commitUrl = `https://api.github.com/repos/${repoOwner}/${repoName}/commits?path=${postsDir}/${post.name}`;
+        const commitResponse = await fetch(commitUrl);
+        const commitData = await commitResponse.json();
+        const commitDate = commitData[0]?.commit?.committer?.date || '';
+
+        return { 
+            ...post, 
+            ...frontMatter, 
+            commitDate,
+            path: `${postsDir}/${post.name}` // Add path property
+        };
+    }));
+
+    return postsWithMetadata.filter(post => post !== null);
+}
 // Run initialization when DOM is loaded
 document.addEventListener('DOMContentLoaded', initializeBlog);
