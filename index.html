@@ -6,35 +6,43 @@
     <title>The Sideline Satirist - Premium Sports Satire</title>
     <link rel="stylesheet" href="css/style.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;500;600;700;800;900&family=Montserrat:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Space+Grotesk:wght@300;400;500;600;700&family=Syncopate:wght@400;700&display=swap" rel="stylesheet">
 </head>
 <body>
+    <!-- Custom Cursor -->
+    <div class="cursor"></div>
+    <div class="cursor-follower"></div>
+
     <nav class="navbar">
-        <div class="container">
-            <a href="index.html" class="nav-brand">
-                <i class="fas fa-football-ball"></i>
-                The Sideline Satirist
+        <div class="navbar-content">
+            <a href="index.html" class="logo">
+                <i class="fas fa-football-ball logo-icon"></i>
+                <span class="logo-text">The Sideline Satirist</span>
             </a>
             <ul class="nav-links">
-                <li><a href="index.html" class="active">Latest</a></li>
-                <li><a href="categories.html">Categories</a></li>
-                <li><a href="about.html">About</a></li>
+                <li><a href="index.html" class="nav-link">Latest</a></li>
+                <li><a href="categories.html" class="nav-link">Categories</a></li>
+                <li><a href="about.html" class="nav-link">About</a></li>
                 <li><a href="#" class="subscribe-btn">Subscribe</a></li>
             </ul>
         </div>
     </nav>
 
     <header class="hero">
+        <div class="hero-particles" id="particles"></div>
         <div class="hero-content">
-            <h1 class="fade-in">Where Sports Meet Sarcasm</h1>
-            <p class="fade-in">Premium satirical sports coverage that's almost as reliable as instant replay</p>
+            <h1 class="hero-title">Where Sports Meet Sarcasm</h1>
+            <p class="hero-subtitle">Premium satirical sports coverage that's almost as reliable as instant replay</p>
+        </div>
+        <div class="scroll-indicator">
+            <i class="fas fa-chevron-down"></i>
         </div>
     </header>
 
     <main>
-        <div class="container">
-            <section id="featured-post" class="slide-in"></section>
-        </div>
+        <section class="featured-section">
+            <div class="featured-grid" id="featuredPost"></div>
+        </section>
 
         <section class="latest-posts">
             <div class="container">
@@ -44,34 +52,40 @@
         </section>
     </main>
 
-    <footer>
+    <footer class="footer">
         <div class="container">
-            <div class="footer-content">
+            <div class="footer-grid">
                 <div class="footer-section">
                     <h3>The Sideline Satirist</h3>
                     <p>Making sports funny since whenever we started doing this.</p>
                     <div class="social-links">
-                        <a href="#" aria-label="Twitter"><i class="fab fa-twitter"></i></a>
-                        <a href="#" aria-label="Facebook"><i class="fab fa-facebook"></i></a>
-                        <a href="#" aria-label="Instagram"><i class="fab fa-instagram"></i></a>
+                        <a href="#" class="social-link" aria-label="Twitter">
+                            <i class="fab fa-twitter"></i>
+                        </a>
+                        <a href="#" class="social-link" aria-label="Facebook">
+                            <i class="fab fa-facebook"></i>
+                        </a>
+                        <a href="#" class="social-link" aria-label="Instagram">
+                            <i class="fab fa-instagram"></i>
+                        </a>
                     </div>
                 </div>
                 <div class="footer-section">
                     <h3>Quick Links</h3>
-                    <ul>
-                        <li><a href="categories.html">Categories</a></li>
-                        <li><a href="about.html">About Us</a></li>
-                        <li><a href="#">Subscribe</a></li>
-                        <li><a href="#">Contact</a></li>
+                    <ul class="footer-links">
+                        <li class="footer-link"><a href="categories.html">Categories</a></li>
+                        <li class="footer-link"><a href="about.html">About Us</a></li>
+                        <li class="footer-link"><a href="#">Subscribe</a></li>
+                        <li class="footer-link"><a href="#">Contact</a></li>
                     </ul>
                 </div>
                 <div class="footer-section">
                     <h3>Categories</h3>
-                    <ul>
-                        <li><a href="#">Football</a></li>
-                        <li><a href="#">Basketball</a></li>
-                        <li><a href="#">Baseball</a></li>
-                        <li><a href="#">Soccer</a></li>
+                    <ul class="footer-links">
+                        <li class="footer-link"><a href="#">Football</a></li>
+                        <li class="footer-link"><a href="#">Basketball</a></li>
+                        <li class="footer-link"><a href="#">Baseball</a></li>
+                        <li class="footer-link"><a href="#">Soccer</a></li>
                     </ul>
                 </div>
             </div>
@@ -81,55 +95,107 @@
         </div>
     </footer>
 
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/js-yaml/4.1.0/js-yaml.min.js"></script>
     <script>
-        // Navbar scroll effect
-        window.addEventListener('scroll', () => {
-            const navbar = document.querySelector('.navbar');
-            if (window.scrollY > 50) {
-                navbar.classList.add('scrolled');
-            } else {
-                navbar.classList.remove('scrolled');
-            }
+        // Custom Cursor
+        const cursor = document.querySelector('.cursor');
+        const cursorFollower = document.querySelector('.cursor-follower');
+
+        document.addEventListener('mousemove', (e) => {
+            cursor.style.left = e.clientX + 'px';
+            cursor.style.top = e.clientY + 'px';
+            
+            setTimeout(() => {
+                cursorFollower.style.left = e.clientX + 'px';
+                cursorFollower.style.top = e.clientY + 'px';
+            }, 100);
         });
 
-        // Rest of your JavaScript remains the same
-        function formatDate(dateString) {
-            return new Date(dateString).toLocaleDateString('en-US', {
-                year: 'numeric',
-                month: 'long',
-                day: 'numeric'
-            });
-        }
+        // Navbar Hide on Scroll
+        let lastScroll = 0;
+        window.addEventListener('scroll', () => {
+            const currentScroll = window.pageYOffset;
+            const navbar = document.querySelector('.navbar');
+            
+            if (currentScroll <= 0) {
+                navbar.classList.remove('hidden');
+                return;
+            }
+            
+            if (currentScroll > lastScroll && !navbar.classList.contains('hidden')) {
+                navbar.classList.add('hidden');
+            } else if (currentScroll < lastScroll && navbar.classList.contains('hidden')) {
+                navbar.classList.remove('hidden');
+            }
+            
+            lastScroll = currentScroll;
+        });
 
+        // Particle Effect
+        function createParticles() {
+            const particles = document.getElementById('particles');
+            for (let i = 0; i < 50; i++) {
+                const particle = document.createElement('div');
+                particle.className = 'particle';
+                particle.style.left = Math.random() * 100 + 'vw';
+                particle.style.animationDelay = Math.random() * 20 + 's';
+                particles.appendChild(particle);
+            }
+        }
+        createParticles();
+
+        // Intersection Observer for Animations
+        const observer = new IntersectionObserver((entries) => {
+            entries.forEach(entry => {
+                if (entry.isIntersecting) {
+                    entry.target.classList.add('visible');
+                }
+            });
+        }, {
+            threshold: 0.1
+        });
+
+        document.querySelectorAll('.fade-in, .post-card, .section-title, .featured-image, .featured-content').forEach((el) => {
+            observer.observe(el);
+        });
+
+        // Create featured post HTML
         function createFeaturedPost(post) {
-            const featured = document.getElementById('featured-post');
-            featured.innerHTML = `
-                <article class="featured-post">
+            return `
+                <div class="featured-image fade-in">
                     <img src="${post.image}" alt="${post.title}" loading="lazy">
-                    <div class="featured-post-content">
-                        <span class="category-tag">${post.category}</span>
-                        <h2>${post.title}</h2>
-                        <div class="post-meta">
-                            <span><i class="far fa-calendar"></i> ${formatDate(post.date)}</span>
-                            <span><i class="far fa-user"></i> ${post.author}</span>
-                        </div>
-                        <p>${post.excerpt}</p>
-                        <a href="${post.path}" class="read-more">Read Full Story →</a>
+                </div>
+                <div class="featured-content fade-in">
+                    <span class="category-badge">${post.category}</span>
+                    <h2 class="featured-title">${post.title}</h2>
+                    <div class="meta-info">
+                        <span class="meta-item">
+                            <i class="far fa-calendar"></i>
+                            ${formatDate(post.date)}
+                        </span>
+                        <span class="meta-item">
+                            <i class="far fa-user"></i>
+                            ${post.author}
+                        </span>
                     </div>
-                </article>
+                    <p>${post.excerpt}</p>
+                    <a href="${post.path}" class="read-more">Read Full Story →</a>
+                </div>
             `;
         }
 
-        function createPostCard(post) {
+        // Create post card HTML
+        function createPostCard(post, index) {
             return `
-                <article class="post-card">
-                    <img src="${post.image}" alt="${post.title}" loading="lazy">
-                    <div class="post-card-content">
-                        <span class="category-tag">${post.category}</span>
-                        <h3>${post.title}</h3>
-                        <div class="post-meta">
-                            <span><i class="far fa-calendar"></i> ${formatDate(post.date)}</span>
+                <article class="post-card fade-in" style="transition-delay: ${index * 0.1}s">
+                    <img src="${post.image}" alt="${post.title}" class="post-image" loading="lazy">
+                    <div class="post-content">
+                        <span class="category-badge">${post.category}</span>
+                        <h3 class="post-title">${post.title}</h3>
+                        <div class="meta-info">
+                            <span class="meta-item">
+                                <i class="far fa-calendar"></i>
+                                ${formatDate(post.date)}
+                            </span>
                         </div>
                         <p>${post.excerpt}</p>
                         <a href="${post.path}" class="read-more">Read More →</a>
@@ -138,35 +204,58 @@
             `;
         }
 
-        // Your existing initialization code remains the same
+        // Format date
+        function formatDate(dateString) {
+            return new Date(dateString).toLocaleDateString('en-US', {
+                year: 'numeric',
+                month: 'long',
+                day: 'numeric'
+            });
+        }
+
+        // Initialize blog with loading states
         async function initializeBlog() {
-            const repoOwner = 'lawrence18365';
-            const repoName = 'sportsblog';
-            const postsDir = 'posts';
+            const featuredPost = document.getElementById('featuredPost');
+            const postsGrid = document.getElementById('postsGrid');
+
+            // Show loading state
+            featuredPost.innerHTML = `
+                <div class="skeleton" style="height: 500px"></div>
+            `;
+            postsGrid.innerHTML = Array(6).fill(`
+                <div class="post-card skeleton">
+                    <div style="height: 250px"></div>
+                    <div class="post-content">
+                        <div class="skeleton" style="height: 24px; width: 100px; margin-bottom: 16px"></div>
+                        <div class="skeleton" style="height: 32px; margin-bottom: 16px"></div>
+                        <div class="skeleton" style="height: 20px; width: 150px"></div>
+                    </div>
+                </div>
+            `).join('');
 
             try {
-                const posts = await getPosts(repoOwner, repoName, postsDir);
+                const posts = await getPosts('lawrence18365', 'sportsblog', 'posts');
+                
+                // Featured post
                 const featuredPost = posts.find(post => post.featured);
                 if (featuredPost) {
-                    createFeaturedPost(featuredPost);
+                    document.getElementById('featuredPost').innerHTML = createFeaturedPost(featuredPost);
                 }
 
+                // Regular posts
                 const regularPosts = posts
                     .filter(post => !post.featured)
                     .sort((a, b) => new Date(b.date) - new Date(a.date));
 
-                const postsGrid = document.getElementById('postsGrid');
-                postsGrid.innerHTML = '';
-                regularPosts.forEach(post => {
-                    postsGrid.innerHTML += createPostCard(post);
-                });
+                postsGrid.innerHTML = regularPosts.map(createPostCard).join('');
             } catch (error) {
                 console.error('Error initializing blog:', error);
-                document.getElementById('postsGrid').innerHTML = '<p>Error loading posts.</p>';
+                featuredPost.innerHTML = '<p>Error loading featured post.</p>';
+                postsGrid.innerHTML = '<p>Error loading posts.</p>';
             }
         }
 
-        // Your existing getPosts function remains the same
+        // Fetch posts from GitHub
         async function getPosts(repoOwner, repoName, postsDir) {
             const apiUrl = `https://api.github.com/repos/${repoOwner}/${repoName}/contents/${postsDir}`;
             
@@ -199,9 +288,9 @@
             return postsWithMetadata.filter(post => post !== null);
         }
 
+        // Initialize when DOM is loaded
         document.addEventListener('DOMContentLoaded', initializeBlog);
     </script>
 </body>
 </html>
-
 
