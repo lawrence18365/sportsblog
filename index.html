@@ -96,123 +96,189 @@
         </div>
     </footer>
 
-    <script>
+  <script>
     // Function to format dates consistently
-function formatDate(dateString) {
-    return new Date(dateString).toLocaleDateString('en-US', {
-        year: 'numeric',
-        month: 'long',
-        day: 'numeric'
-    });
-}
+    function formatDate(dateString) {
+        return new Date(dateString).toLocaleDateString('en-US', {
+            year: 'numeric',
+            month: 'long',
+            day: 'numeric'
+        });
+    }
 
-// Function to create HTML for the featured post
-function createFeaturedPost(post) {
-    const featured = document.getElementById('featured-post');
-    featured.innerHTML = `
-        <article class="featured-post">
-            <img src="${post.image}" alt="${post.title}">
-            <div class="featured-post-content">
-                <span class="category-tag">${post.category}</span>
-                <h2>${post.title}</h2>
-                <div class="post-meta">
-                    <span>${formatDate(post.date)}</span> | 
-                    <span>By ${post.author}</span>
-                </div>
-                <p>${post.excerpt}</p>
-                <a href="${post.path}" class="read-more">Read Full Story →</a>
-            </div>
-        </article>
-    `;
-}
-
-// Function to create HTML for a regular post card
-function createPostCard(post) {
-    return `
-        <article class="post-card">
-            <img src="${post.image}" alt="${post.title}">
-            <div class="post-content">
-                <span class="category-tag">${post.category}</span>
-                <h3>${post.title}</h3>
-                <div class="post-meta">
-                    <span>${formatDate(post.date)}</span>
-                </div>
-                <p>${post.excerpt}</p>
-                <a href="${post.path}" class="read-more">Read More →</a>
-            </div>
-        </article>
-    `;
-}
-
-// Function to initialize the blog
-async function initializeBlog() {
-    const repoOwner = 'lawrence18365'; // Replace with your GitHub username
-    const repoName = 'sportsblog';  // Replace with your repository name
-    const postsDir = 'posts';
-
-    try {
-        const posts = await getPosts(repoOwner, repoName, postsDir);
-
-        // Find featured post (if you have a mechanism to designate a featured post)
-        const featuredPost = posts.find(post => post.featured); // Assuming you add a 'featured' property in your front matter
-        if (featuredPost) {
-            createFeaturedPost(featuredPost);
+    // Function to create HTML for the featured post
+    function createFeaturedPost(post) {
+        const featuredContainer = document.getElementById('featured-post-container');
+        if (!featuredContainer) {
+            console.error('Featured post container not found');
+            return;
         }
 
-        // Get non-featured posts and sort by date
-        const regularPosts = posts
-            .filter(post => !post.featured)
-            .sort((a, b) => new Date(b.date) - new Date(a.date));
-
-        // Populate posts grid
-        const postsGrid = document.getElementById('postsGrid');
-        postsGrid.innerHTML = ''; // Clear existing posts
-        regularPosts.forEach(post => {
-            postsGrid.innerHTML += createPostCard(post);
-        });
-    } catch (error) {
-        console.error('Error initializing blog:', error);
-        document.getElementById('postsGrid').innerHTML = '<p>Error loading posts.</p>';
+        featuredContainer.innerHTML = `
+            <article class="featured-post">
+                <img src="${post.image}" alt="${post.title}">
+                <div class="featured-post-content">
+                    <span class="category-tag">${post.category}</span>
+                    <h2>${post.title}</h2>
+                    <div class="post-meta">
+                        <span>${formatDate(post.date)}</span> | 
+                        <span>By ${post.author}</span>
+                    </div>
+                    <p>${post.excerpt}</p>
+                    <a href="${post.path}" class="read-more">Read Full Story →</a>
+                </div>
+            </article>
+        `;
     }
-}
 
-// Function to fetch and parse posts from GitHub
-async function getPosts(repoOwner, repoName, postsDir) {
-    const apiUrl = `https://api.github.com/repos/${repoOwner}/${repoName}/contents/${postsDir}`;
-    
-    const response = await fetch(apiUrl);
-    const data = await response.json();
+    // Function to create HTML for a regular post card
+    function createPostCard(post) {
+        return `
+            <article class="post-card">
+                <img src="${post.image}" alt="${post.title}">
+                <div class="post-content">
+                    <span class="category-tag">${post.category}</span>
+                    <h3>${post.title}</h3>
+                    <div class="post-meta">
+                        <span>${formatDate(post.date)}</span>
+                    </div>
+                    <p>${post.excerpt}</p>
+                    <a href="${post.path}" class="read-more">Read More →</a>
+                </div>
+            </article>
+        `;
+    }
 
-    // Fetch and parse front matter for each post
-    const postsWithMetadata = await Promise.all(data.map(async (post) => {
-        if (!post.name.endsWith('.html')) return null;
+    // Function to initialize the blog
+    async function initializeBlog() {
+        const repoOwner = 'lawrence18365';
+        const repoName = 'sportsblog';
+        const postsDir = 'posts';
 
-        const postUrl = post.download_url;
-        const postResponse = await fetch(postUrl);
-        const postContent = await postResponse.text();
+        // Get container elements
+        const postsGridContainer = document.getElementById('posts-grid-container');
+        const featuredPostContainer = document.getElementById('featured-post-container');
 
-        // Extract front matter using js-yaml
-        const frontMatterMatch = postContent.match(/^---([\s\S]*?)---/);
-        const frontMatter = frontMatterMatch ? jsyaml.load(frontMatterMatch[1]) : {};
+        // Show loading states
+        if (featuredPostContainer) {
+            featuredPostContainer.innerHTML = '<div class="loading">Loading featured post...</div>';
+        }
+        if (postsGridContainer) {
+            postsGridContainer.innerHTML = '<div class="loading">Loading posts...</div>';
+        }
 
-        // Get latest commit date for sorting
-        const commitUrl = `https://api.github.com/repos/${repoOwner}/${repoName}/commits?path=${postsDir}/${post.name}`;
-        const commitResponse = await fetch(commitUrl);
-        const commitData = await commitResponse.json();
-        const commitDate = commitData[0]?.commit?.committer?.date || '';
+        try {
+            const posts = await getPosts(repoOwner, repoName, postsDir);
+            console.log('Fetched posts:', posts); // Debug log
 
-        return { 
-            ...post, 
-            ...frontMatter, 
-            commitDate,
-            path: `${postsDir}/${post.name}` // Add path property
-        };
-    }));
+            if (!posts || posts.length === 0) {
+                throw new Error('No posts found');
+            }
 
-    return postsWithMetadata.filter(post => post !== null);
-}
-// Run initialization when DOM is loaded
-document.addEventListener('DOMContentLoaded', initializeBlog);
+            // Find featured post or use the first post
+            const featuredPost = posts.find(post => post.featured) || posts[0];
+            if (featuredPost) {
+                createFeaturedPost(featuredPost);
+            }
+
+            // Get non-featured posts and sort by date
+            const regularPosts = posts
+                .filter(post => post !== featuredPost)
+                .sort((a, b) => new Date(b.date) - new Date(a.date));
+
+            // Update posts grid
+            if (postsGridContainer) {
+                postsGridContainer.innerHTML = regularPosts.length > 0 
+                    ? regularPosts.map(post => createPostCard(post)).join('')
+                    : '<p>No posts found.</p>';
+            }
+
+        } catch (error) {
+            console.error('Error initializing blog:', error);
+            
+            if (featuredPostContainer) {
+                featuredPostContainer.innerHTML = '<div class="error">Error loading featured post.</div>';
+            }
+            if (postsGridContainer) {
+                postsGridContainer.innerHTML = '<div class="error">Error loading posts.</div>';
+            }
+        }
+    }
+
+    // Function to fetch and parse posts from GitHub
+    async function getPosts(repoOwner, repoName, postsDir) {
+        try {
+            const apiUrl = `https://api.github.com/repos/${repoOwner}/${repoName}/contents/${postsDir}`;
+            
+            const response = await fetch(apiUrl);
+            if (!response.ok) {
+                throw new Error(`GitHub API error: ${response.status}`);
+            }
+            
+            const data = await response.json();
+            console.log('Fetched files:', data); // Debug log
+
+            const postsWithMetadata = await Promise.all(data.map(async (post) => {
+                try {
+                    const postUrl = post.download_url;
+                    const postResponse = await fetch(postUrl);
+                    
+                    if (!postResponse.ok) {
+                        console.error(`Error fetching post ${post.name}:`, postResponse.status);
+                        return null;
+                    }
+                    
+                    const postContent = await postResponse.text();
+
+                    // Extract front matter
+                    const frontMatterMatch = postContent.match(/^---([\s\S]*?)---/);
+                    const frontMatter = frontMatterMatch ? jsyaml.load(frontMatterMatch[1]) : {};
+
+                    return { 
+                        ...post, 
+                        ...frontMatter,
+                        title: frontMatter.title || 'Untitled Post',
+                        excerpt: frontMatter.excerpt || 'No excerpt available',
+                        date: frontMatter.date || new Date().toISOString(),
+                        author: frontMatter.author || 'Anonymous',
+                        category: frontMatter.category || 'Uncategorized',
+                        image: frontMatter.image || '/placeholder.svg?height=400&width=600',
+                        path: `${postsDir}/${post.name}`
+                    };
+                } catch (error) {
+                    console.error(`Error processing post ${post.name}:`, error);
+                    return null;
+                }
+            }));
+
+            const validPosts = postsWithMetadata.filter(post => post !== null);
+            console.log('Processed posts:', validPosts); // Debug log
+            return validPosts;
+
+        } catch (error) {
+            console.error('Error in getPosts:', error);
+            throw error;
+        }
+    }
+
+    // Run initialization when DOM is loaded
+    document.addEventListener('DOMContentLoaded', initializeBlog);
     </script>
+
+    <style>
+    .loading {
+        text-align: center;
+        padding: 2rem;
+        color: var(--color-accent);
+        font-size: 1.2rem;
+    }
+
+    .error {
+        text-align: center;
+        padding: 2rem;
+        color: #ff3c00;
+        font-size: 1.2rem;
+    }
+    </style>
 </body>
 </html>
