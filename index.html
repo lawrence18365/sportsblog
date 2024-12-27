@@ -206,60 +206,111 @@
     }
 
     // Function to fetch and parse posts from GitHub
-    async function getPosts(repoOwner, repoName, postsDir) {
-        try {
-            const apiUrl = `https://api.github.com/repos/${repoOwner}/${repoName}/contents/${postsDir}`;
-            
-            const response = await fetch(apiUrl);
-            if (!response.ok) {
-                throw new Error(`GitHub API error: ${response.status}`);
-            }
-            
-            const data = await response.json();
-            console.log('Fetched files:', data); // Debug log
+  // Debug version of getPosts function
+async function getPosts(repoOwner, repoName, postsDir) {
+    const apiUrl = `https://api.github.com/repos/${repoOwner}/${repoName}/contents/${postsDir}`;
+    console.log('Fetching from URL:', apiUrl);
 
-            const postsWithMetadata = await Promise.all(data.map(async (post) => {
+    try {
+        const response = await fetch(apiUrl);
+        console.log('API Response status:', response.status);
+        
+        if (!response.ok) {
+            const errorText = await response.text();
+            console.error('GitHub API error details:', errorText);
+            throw new Error(`GitHub API error: ${response.status}`);
+        }
+
+        const data = await response.json();
+        console.log('Files found in directory:', data.map(file => file.name));
+
+        // Filter for both Markdown and HTML files
+        const posts = await Promise.all(data
+            .filter(file => file.name.endsWith('.md') || file.name.endsWith('.html'))
+            .map(async (file) => {
+                console.log('Processing file:', file.name);
                 try {
-                    const postUrl = post.download_url;
-                    const postResponse = await fetch(postUrl);
-                    
+                    const postResponse = await fetch(file.download_url);
                     if (!postResponse.ok) {
-                        console.error(`Error fetching post ${post.name}:`, postResponse.status);
+                        console.error(`Error fetching post ${file.name}:`, postResponse.status);
+                        return null;
+                    }
+                    const postContent = await postResponse.text();
+                    
+                    // Extract front matter
+                    const frontMatterMatch = postContent.match(/^---\n([\s\S]*?)\n---/);
+                    if (!frontMatterMatch) {
+                        console.warn(`No front matter found in ${file.name}`);
                         return null;
                     }
                     
-                    const postContent = await postResponse.text();
+                    console.log(`Front matter found in ${file.name}:`, frontMatterMatch[1]);
+                    const frontMatter = jsyaml.load(frontMatterMatch[1]);
 
-                    // Extract front matter
-                    const frontMatterMatch = postContent.match(/^---([\s\S]*?)---/);
-                    const frontMatter = frontMatterMatch ? jsyaml.load(frontMatterMatch[1]) : {};
-
-                    return { 
-                        ...post, 
+                    return {
+                        ...file,
                         ...frontMatter,
                         title: frontMatter.title || 'Untitled Post',
                         excerpt: frontMatter.excerpt || 'No excerpt available',
                         date: frontMatter.date || new Date().toISOString(),
                         author: frontMatter.author || 'Anonymous',
                         category: frontMatter.category || 'Uncategorized',
-                        image: frontMatter.image || '/placeholder.svg?height=400&width=600',
-                        path: `${postsDir}/${post.name}`
+                        image: frontMatter.image || 'placeholder.svg',
+                        content: postContent.replace(/^---\n[\s\S]*?\n---/, '').trim() // Remove front matter
                     };
                 } catch (error) {
-                    console.error(`Error processing post ${post.name}:`, error);
+                    console.error(`Error processing ${file.name}:`, error);
                     return null;
                 }
             }));
 
-            const validPosts = postsWithMetadata.filter(post => post !== null);
-            console.log('Processed posts:', validPosts); // Debug log
-            return validPosts;
+        const validPosts = posts.filter(post => post !== null);
+        console.log('Valid posts found:', validPosts.length);
+        
+        return validPosts.sort((a, b) => new Date(b.date) - new Date(a.date));
 
-        } catch (error) {
-            console.error('Error in getPosts:', error);
-            throw error;
-        }
+    } catch (error) {
+        console.error('Error in getPosts:', error);
+        throw error;
     }
+}
+
+// Modified initialize function
+async function initializeBlog() {
+    const featuredPostContainer = document.getElementById('featured-post-container');
+    const postsGridContainer = document.getElementById('posts-grid-container');
+
+    featuredPostContainer.innerHTML = '<div class="loading">Loading Featured Post...</div>';
+    postsGridContainer.innerHTML = '<div class="loading">Loading Posts...</div>';
+
+    try {
+        console.log('Starting blog initialization...');
+        const posts = await getPosts(repoOwner, repoName, postsDir);
+        console.log('Posts retrieved:', posts);
+
+        if (posts.length === 0) {
+            console.error('No posts found');
+            featuredPostContainer.innerHTML = '<div class="error">No posts available.</div>';
+            postsGridContainer.innerHTML = '<div class="error">No posts available.</div>';
+            return;
+        }
+
+        // Featured post
+        const featuredPostData = posts.find(post => post.featured) || posts[0];
+        console.log('Featured post:', featuredPostData);
+        featuredPostContainer.innerHTML = createFeaturedPost(featuredPostData);
+
+        // Regular posts
+        const regularPosts = posts.filter(post => post !== featuredPostData);
+        console.log('Regular posts:', regularPosts.length);
+        postsGridContainer.innerHTML = regularPosts.map(createPostCard).join('');
+
+    } catch (error) {
+        console.error('Error initializing blog:', error);
+        featuredPostContainer.innerHTML = `<div class="error">Error loading featured post: ${error.message}</div>`;
+        postsGridContainer.innerHTML = `<div class="error">Error loading posts: ${error.message}</div>`;
+    }
+}
 
     // Run initialization when DOM is loaded
     document.addEventListener('DOMContentLoaded', initializeBlog);
