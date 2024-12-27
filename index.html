@@ -218,6 +218,7 @@ async function getPosts() {
 }
 
 // Function to initialize the blog
+// Function to initialize the blog
 async function initializeBlog() {
     const postsGridContainer = document.getElementById('posts-grid-container');
     const featuredPostContainer = document.getElementById('featured-post-container');
@@ -241,8 +242,10 @@ async function initializeBlog() {
 
         // Find featured post or use the first post
         const featuredPost = posts.find(post => post.featured) || posts[0];
-        if (featuredPost) {
-            createFeaturedPost(featuredPost);
+        if (featuredPost && featuredPostContainer) {
+            // Create and assign the featured post HTML to the container
+            featuredPostContainer.innerHTML = createFeaturedPost(featuredPost);
+            console.log('Featured post loaded:', featuredPost.title);
         }
 
         // Get non-featured posts
@@ -255,6 +258,7 @@ async function initializeBlog() {
             postsGridContainer.innerHTML = regularPosts.length > 0 
                 ? regularPosts.map(post => createPostCard(post)).join('')
                 : '<p>No posts found.</p>';
+            console.log('Regular posts loaded:', regularPosts.length);
         }
 
     } catch (error) {
