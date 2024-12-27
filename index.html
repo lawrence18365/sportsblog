@@ -7,9 +7,10 @@
     <link rel="stylesheet" href="css/style.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Space+Grotesk:wght@300;400;500;600;700&family=Syncopate:wght@400;700&display=swap" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/js-yaml@4.1.0/dist/js-yaml.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/showdown/2.1.0/showdown.min.js"></script>
 </head>
 <body>
-    <!-- Custom Cursor -->
     <div class="cursor"></div>
     <div class="cursor-follower"></div>
 
@@ -41,13 +42,13 @@
 
     <main>
         <section class="featured-section">
-            <div class="featured-grid" id="featuredPost"></div>
+            <div class="featured-grid" id="featured-post-container"></div>
         </section>
 
         <section class="latest-posts">
             <div class="container">
                 <h2 class="section-title">Latest Stories</h2>
-                <div class="posts-grid" id="postsGrid"></div>
+                <div class="posts-grid" id="posts-grid-container"></div>
             </div>
         </section>
     </main>
@@ -96,240 +97,221 @@
     </footer>
 
     <script>
-        // Custom Cursor
-        const cursor = document.querySelector('.cursor');
-        const cursorFollower = document.querySelector('.cursor-follower');
+       // Custom Cursor
+const cursor = document.querySelector('.cursor');
+const cursorFollower = document.querySelector('.cursor-follower');
 
-        document.addEventListener('mousemove', (e) => {
-            cursor.style.left = e.clientX + 'px';
-            cursor.style.top = e.clientY + 'px';
-            
-            setTimeout(() => {
-                cursorFollower.style.left = e.clientX + 'px';
-                cursorFollower.style.top = e.clientY + 'px';
-            }, 100);
-        });
+document.addEventListener('mousemove', (e) => {
+    cursor.style.left = e.clientX + 'px';
+    cursor.style.top = e.clientY + 'px';
 
-        // Navbar Hide on Scroll
-        let lastScroll = 0;
-        window.addEventListener('scroll', () => {
-            const currentScroll = window.pageYOffset;
-            const navbar = document.querySelector('.navbar');
-            
-            if (currentScroll <= 0) {
-                navbar.classList.remove('hidden');
-                return;
-            }
-            
-            if (currentScroll > lastScroll && !navbar.classList.contains('hidden')) {
-                navbar.classList.add('hidden');
-            } else if (currentScroll < lastScroll && navbar.classList.contains('hidden')) {
-                navbar.classList.remove('hidden');
-            }
-            
-            lastScroll = currentScroll;
-        });
+    setTimeout(() => {
+        cursorFollower.style.left = e.clientX + 'px';
+        cursorFollower.style.top = e.clientY + 'px';
+    }, 100);
+});
 
-        // Particle Effect
-        function createParticles() {
-            const particles = document.getElementById('particles');
-            for (let i = 0; i < 50; i++) {
-                const particle = document.createElement('div');
-                particle.className = 'particle';
-                particle.style.left = Math.random() * 100 + 'vw';
-                particle.style.animationDelay = Math.random() * 20 + 's';
-                particles.appendChild(particle);
-            }
+// Navbar Hide on Scroll
+let lastScroll = 0;
+window.addEventListener('scroll', () => {
+    const currentScroll = window.pageYOffset;
+    const navbar = document.querySelector('.navbar');
+
+    if (currentScroll <= 0) {
+        navbar.classList.remove('hidden');
+        return;
+    }
+
+    if (currentScroll > lastScroll && !navbar.classList.contains('hidden')) {
+        navbar.classList.add('hidden');
+    } else if (currentScroll < lastScroll && navbar.classList.contains('hidden')) {
+        navbar.classList.remove('hidden');
+    }
+
+    lastScroll = currentScroll;
+});
+
+// Particle Effect
+function createParticles() {
+    const particles = document.getElementById('particles');
+    for (let i = 0; i < 50; i++) {
+        const particle = document.createElement('div');
+        particle.className = 'particle';
+        particle.style.left = Math.random() * 100 + 'vw';
+        particle.style.animationDelay = Math.random() * 20 + 's';
+        particles.appendChild(particle);
+    }
+}
+createParticles();
+
+// Intersection Observer for Animations
+const observer = new IntersectionObserver((entries) => {
+    entries.forEach(entry => {
+        if (entry.isIntersecting) {
+            entry.target.classList.add('visible');
         }
-        createParticles();
+    });
+}, {
+    threshold: 0.1
+});
 
-        // Intersection Observer for Animations
-        const observer = new IntersectionObserver((entries) => {
-            entries.forEach(entry => {
-                if (entry.isIntersecting) {
-                    entry.target.classList.add('visible');
-                }
-            });
-        }, {
-            threshold: 0.1
-        });
+document.querySelectorAll('.fade-in, .post-card, .section-title, .featured-image, .featured-content').forEach((el) => {
+    observer.observe(el);
+});
+// GitHub API and content settings
+const repoOwner = 'lawrence18365'; // Your GitHub username
+const repoName = 'sportsblog';  // Your repository name
+const postsDir = 'posts';      // Folder containing your posts
+const converter = new showdown.Converter(); // Markdown converter
 
-        document.querySelectorAll('.fade-in, .post-card, .section-title, .featured-image, .featured-content').forEach((el) => {
-            observer.observe(el);
-        });
+// Function to format dates
+function formatDate(dateString) {
+    return new Date(dateString).toLocaleDateString('en-US', {
+        year: 'numeric',
+        month: 'long',
+        day: 'numeric'
+    });
+}
 
-        // Create featured post HTML
-        function createFeaturedPost(post) {
-            return `
-                <div class="featured-image fade-in">
-                    <img src="${post.image}" alt="${post.title}" loading="lazy">
+// Function to create HTML for featured post
+function createFeaturedPost(post) {
+    const postContentHtml = converter.makeHtml(post.content);
+    return `
+        <div class="featured-image fade-in">
+            <img src="${post.image}" alt="${post.title}" loading="lazy">
+        </div>
+        <div class="featured-content fade-in">
+            <span class="category-badge">${post.category}</span>
+            <h2 class="featured-title">${post.title}</h2>
+            <div class="meta-info">
+                <span class="meta-item">
+                    <i class="far fa-calendar"></i>
+                    ${formatDate(post.date)}
+                </span>
+                <span class="meta-item">
+                    <i class="far fa-user"></i>
+                    ${post.author}
+                </span>
+            </div>
+            <p>${post.excerpt}</p>
+            ${postContentHtml} 
+            <a href="${post.html_url}" target="_blank" class="read-more">View on GitHub →</a>
+        </div>
+    `;
+}
+
+// Function to create HTML for a post card
+function createPostCard(post, index) {
+    const postContentHtml = converter.makeHtml(post.content);
+    return `
+        <article class="post-card fade-in" style="transition-delay: ${index * 0.1}s">
+            <img src="${post.image}" alt="${post.title}" class="post-image" loading="lazy">
+            <div class="post-content">
+                <span class="category-badge">${post.category}</span>
+                <h3 class="post-title">${post.title}</h3>
+                <div class="meta-info">
+                    <span class="meta-item">
+                        <i class="far fa-calendar"></i>
+                        ${formatDate(post.date)}
+                    </span>
                 </div>
-                <div class="featured-content fade-in">
-                    <span class="category-badge">${post.category}</span>
-                    <h2 class="featured-title">${post.title}</h2>
-                    <div class="meta-info">
-                        <span class="meta-item">
-                            <i class="far fa-calendar"></i>
-                            ${formatDate(post.date)}
-                        </span>
-                        <span class="meta-item">
-                            <i class="far fa-user"></i>
-                            ${post.author}
-                        </span>
-                    </div>
-                    <p>${post.excerpt}</p>
-                    <a href="${post.path}" class="read-more">Read Full Story →</a>
-                </div>
-            `;
+                <p>${post.excerpt}</p>
+                ${postContentHtml}
+                <a href="${post.html_url}" target="_blank" class="read-more">View on GitHub →</a>
+            </div>
+        </article>
+    `;
+}
+
+// Fetch posts from GitHub
+async function getPosts(repoOwner, repoName, postsDir) {
+    const apiUrl = `https://api.github.com/repos/${repoOwner}/${repoName}/contents/${postsDir}`;
+
+    try {
+        const response = await fetch(apiUrl);
+        if (!response.ok) {
+            throw new Error(`GitHub API error: ${response.status}`);
         }
 
-        // Create post card HTML
-        function createPostCard(post, index) {
-            return `
-                <article class="post-card fade-in" style="transition-delay: ${index * 0.1}s">
-                    <img src="${post.image}" alt="${post.title}" class="post-image" loading="lazy">
-                    <div class="post-content">
-                        <span class="category-badge">${post.category}</span>
-                        <h3 class="post-title">${post.title}</h3>
-                        <div class="meta-info">
-                            <span class="meta-item">
-                                <i class="far fa-calendar"></i>
-                                ${formatDate(post.date)}
-                            </span>
-                        </div>
-                        <p>${post.excerpt}</p>
-                        <a href="${post.path}" class="read-more">Read More →</a>
-                    </div>
-                </article>
-            `;
-        }
+        const data = await response.json();
 
-        // Format date
-        function formatDate(dateString) {
-            return new Date(dateString).toLocaleDateString('en-US', {
-                year: 'numeric',
-                month: 'long',
-                day: 'numeric'
-            });
-        }
-
-        // Initialize blog with loading states
-        async function initializeBlog() {
-            const featuredPost = document.getElementById('featuredPost');
-            const postsGrid = document.getElementById('postsGrid');
-
-            // Show loading state
-            featuredPost.innerHTML = `
-                <div class="skeleton" style="height: 500px"></div>
-            `;
-            postsGrid.innerHTML = Array(6).fill(`
-                <div class="post-card skeleton">
-                    <div style="height: 250px"></div>
-                    <div class="post-content">
-                        <div class="skeleton" style="height: 24px; width: 100px; margin-bottom: 16px"></div>
-                        <div class="skeleton" style="height: 32px; margin-bottom: 16px"></div>
-                        <div class="skeleton" style="height: 20px; width: 150px"></div>
-                    </div>
-                </div>
-            `).join('');
-
-            try {
-                const posts = await getPosts('lawrence18365', 'sportsblog', 'posts');
-                console.log('Retrieved posts:', posts); // Debug log
-
-                if (posts.length === 0) {
-                    throw new Error('No posts found');
+        // Filter for Markdown files and process them
+        const posts = await Promise.all(data
+            .filter(file => file.name.endsWith('.md'))
+            .map(async (file) => {
+                const postResponse = await fetch(file.download_url);
+                if (!postResponse.ok) {
+                    console.error(`Error fetching post ${file.name}:`, postResponse.status);
+                    return null;
                 }
+                const postContent = await postResponse.text();
+                const frontMatterMatch = postContent.match(/^---\n([\s\S]*?)\n---/);
+                const frontMatter = frontMatterMatch ? jsyaml.load(frontMatterMatch[1]) : {};
 
-                // Featured post - use first post if none is marked as featured
-                const featuredPostData = posts.find(post => post.featured) || posts[0];
-                featuredPost.innerHTML = createFeaturedPost(featuredPostData);
-
-                // Regular posts - exclude featured post if any
-                const regularPosts = posts
-                    .filter(post => post !== featuredPostData)
-                    .sort((a, b) => new Date(b.date) - new Date(a.date));
-
-                postsGrid.innerHTML = regularPosts.map((post, index) => 
-                    createPostCard(post, index)
-                ).join('');
-
-            } catch (error) {
-                console.error('Error initializing blog:', error);
-                featuredPost.innerHTML = `
-                    <div class="featured-content">
-                        <h2 class="featured-title">Error Loading Posts</h2>
-                        <p>We're having trouble loading the latest posts. Please try again later.</p>
-                    </div>
-                `;
-                postsGrid.innerHTML = '<p class="error-message">Error loading posts. Please try again later.</p>';
-            }
-        }
-
-        // Fetch posts from GitHub
-        async function getPosts(repoOwner, repoName, postsDir) {
-            try {
-                const apiUrl = `https://api.github.com/repos/${repoOwner}/${repoName}/contents/${postsDir}`;
-                
-                const response = await fetch(apiUrl);
-                if (!response.ok) {
-                    throw new Error(`GitHub API error: ${response.status}`);
-                }
-                
-                const data = await response.json();
-                console.log('Fetched files:', data); // Debug log
-
-                const postsWithMetadata = await Promise.all(data.map(async (post) => {
-                    // Remove the HTML extension check to allow all files
-                    const postUrl = post.download_url;
-                    const postResponse = await fetch(postUrl);
-                    
-                    if (!postResponse.ok) {
-                        console.error(`Error fetching post ${post.name}:`, postResponse.status);
-                        return null;
+                // Process image paths in Markdown content
+                const githubRawUrl = `https://raw.githubusercontent.com/${repoOwner}/${repoName}/main/${postsDir}/`;
+                let processedContent = postContent.replace(/!\[.*?\]\((.*?)\)/g, (match, imagePath) => {
+                    if (imagePath.startsWith('http')) {
+                        return match; // Absolute URL, no change
                     }
-                    
-                    const postContent = await postResponse.text();
-                    console.log(`Content for ${post.name}:`, postContent.substring(0, 100)); // Debug log
+                    return match.replace(imagePath, `${githubRawUrl}${imagePath}`);
+                });
 
-                    // More lenient front matter extraction
-                    const frontMatterMatch = postContent.match(/^---\n([\s\S]*?)\n---/);
-                    const frontMatter = frontMatterMatch ? jsyaml.load(frontMatterMatch[1]) : {};
+                return {
+                    ...file,
+                    ...frontMatter,
+                    title: frontMatter.title || 'Untitled Post',
+                    excerpt: frontMatter.excerpt || 'No excerpt available',
+                    date: frontMatter.date || new Date().toISOString(),
+                    author: frontMatter.author || 'Anonymous',
+                    category: frontMatter.category || 'Uncategorized',
+                    image: frontMatter.image || 'placeholder.svg',
+                    content: processedContent // Markdown content with adjusted image paths
+                };
+            }));
 
-                    return { 
-                        ...post, 
-                        ...frontMatter,
-                        title: frontMatter.title || 'Untitled Post',
-                        excerpt: frontMatter.excerpt || 'No excerpt available',
-                        date: frontMatter.date || new Date().toISOString(),
-                        author: frontMatter.author || 'Anonymous',
-                        category: frontMatter.category || 'Uncategorized',
-                        image: frontMatter.image || '/placeholder.svg?height=400&width=600',
-                        path: `${postsDir}/${post.name}`
-                    };
-                }));
+        // Filter out any null posts and sort by date
+        return posts.filter(post => post !== null).sort((a, b) => new Date(b.date) - new Date(a.date));
 
-                const validPosts = postsWithMetadata.filter(post => post !== null);
-                console.log('Processed posts:', validPosts); // Debug log
-                return validPosts;
-            } catch (error) {
-                console.error('Error in getPosts:', error);
-                return [];
-            }
+    } catch (error) {
+        console.error('Error fetching or processing posts:', error);
+        return [];
+    }
+}
+
+// Initialize blog
+async function initializeBlog() {
+    const featuredPostContainer = document.getElementById('featured-post-container');
+    const postsGridContainer = document.getElementById('posts-grid-container');
+
+    // Show loading states (optional - improve with placeholders)
+    featuredPostContainer.innerHTML = '<div class="loading">Loading Featured Post...</div>';
+    postsGridContainer.innerHTML = '<div class="loading">Loading Posts...</div>';
+
+    try {
+        const posts = await getPosts(repoOwner, repoName, postsDir);
+
+        if (posts.length === 0) {
+            throw new Error('No posts found');
         }
 
-        // Initialize when DOM is loaded
-        document.addEventListener('DOMContentLoaded', initializeBlog);
+        // Featured post
+        const featuredPostData = posts.find(post => post.featured) || posts[0];
+        featuredPostContainer.innerHTML = createFeaturedPost(featuredPostData);
+
+        // Regular posts (exclude featured post)
+        const regularPosts = posts.filter(post => post !== featuredPostData);
+        postsGridContainer.innerHTML = regularPosts.map(createPostCard).join('');
+
+    } catch (error) {
+        console.error('Error initializing blog:', error);
+        featuredPostContainer.innerHTML = '<div class="error">Error loading featured post.</div>';
+        postsGridContainer.innerHTML = '<div class="error">Error loading posts.</div>';
+    }
+}
+
+// Call initializeBlog on DOMContentLoaded
+document.addEventListener('DOMContentLoaded', initializeBlog);
     </script>
-    <script src="https://cdn.jsdelivr.net/npm/js-yaml@4.1.0/dist/js-yaml.min.js"></script>
-    <style>
-        .error-message {
-            text-align: center;
-            padding: 2rem;
-            color: var(--color-accent);
-            font-size: 1.2rem;
-        }
-    </style>
 </body>
 </html>
-
