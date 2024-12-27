@@ -424,6 +424,181 @@ body {
 .post-card:hover .post-image {
   transform: scale(1.05);
 }
+/* Featured Post Styles */
+.featured-post {
+    display: grid;
+    grid-template-columns: 1.5fr 1fr;
+    gap: 2rem;
+    background: var(--color-dark-800);
+    border-radius: 20px;
+    overflow: hidden;
+    padding: 2rem;
+}
+
+.featured-post img {
+    width: 100%;
+    height: 500px;
+    object-fit: cover;
+    border-radius: 15px;
+    transition: transform 0.3s var(--transition-smooth);
+}
+
+.featured-post:hover img {
+    transform: scale(1.05);
+}
+
+.featured-post-content {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    padding: 2rem;
+}
+
+.featured-post-content h2 {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 3rem;
+    line-height: 1.1;
+    margin: 1rem 0;
+    background: var(--gradient-text);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+}
+
+.featured-post .category-tag {
+    display: inline-block;
+    background: rgba(255, 45, 85, 0.1);
+    border: 1px solid var(--color-accent);
+    color: var(--color-accent);
+    padding: 0.5rem 1rem;
+    border-radius: 20px;
+    font-size: 0.8rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 2px;
+    margin-bottom: 1rem;
+}
+
+.featured-post .post-meta {
+    display: flex;
+    gap: 1rem;
+    font-size: 0.9rem;
+    color: var(--color-light-800);
+    margin-bottom: 1.5rem;
+}
+
+.featured-post .post-meta i {
+    color: var(--color-accent);
+    margin-right: 0.5rem;
+}
+
+/* Regular Post Card Styles */
+.post-card {
+    background: var(--color-dark-800);
+    border-radius: 20px;
+    overflow: hidden;
+    transition: transform 0.3s var(--transition-smooth);
+}
+
+.post-card:hover {
+    transform: translateY(-5px);
+}
+
+.post-card img {
+    width: 100%;
+    height: 240px;
+    object-fit: cover;
+    transition: transform 0.3s var(--transition-smooth);
+}
+
+.post-card:hover img {
+    transform: scale(1.05);
+}
+
+.post-card .post-content {
+    padding: 2rem;
+}
+
+.post-card h3 {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 2rem;
+    line-height: 1.2;
+    margin: 1rem 0;
+    background: var(--gradient-text);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+}
+
+.post-card .category-tag {
+    display: inline-block;
+    background: rgba(255, 45, 85, 0.1);
+    border: 1px solid var(--color-accent);
+    color: var(--color-accent);
+    padding: 0.5rem 1rem;
+    border-radius: 20px;
+    font-size: 0.8rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 2px;
+}
+
+.post-card .post-meta {
+    font-size: 0.9rem;
+    color: var(--color-light-800);
+    margin: 1rem 0;
+}
+
+.post-card .post-meta i {
+    color: var(--color-accent);
+    margin-right: 0.5rem;
+}
+
+.post-card p {
+    color: var(--color-light-800);
+    margin-bottom: 1.5rem;
+    line-height: 1.6;
+}
+
+.read-more {
+    display: inline-block;
+    color: var(--color-accent);
+    text-decoration: none;
+    font-weight: 600;
+    transition: all 0.3s var(--transition-smooth);
+}
+
+.read-more:hover {
+    color: var(--color-accent-alt);
+    transform: translateX(5px);
+}
+
+/* Responsive Adjustments */
+@media (max-width: 1200px) {
+    .featured-post {
+        grid-template-columns: 1fr;
+    }
+    
+    .featured-post img {
+        height: 400px;
+    }
+    
+    .featured-post-content {
+        padding: 2rem 0;
+    }
+}
+
+@media (max-width: 768px) {
+    .featured-post img {
+        height: 300px;
+    }
+    
+    .featured-post-content h2 {
+        font-size: 2.5rem;
+    }
+    
+    .post-card h3 {
+        font-size: 1.8rem;
+    }
+}
 
 /* Animations */
 @keyframes logoSpin {
