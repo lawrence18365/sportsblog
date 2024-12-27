@@ -43,7 +43,13 @@ body {
   line-height: 1.6;
   overflow-x: hidden;
 }
-
+/* Container Fixes */
+.container {
+    max-width: 1400px;
+    margin: 0 auto;
+    padding: 0 2rem;
+    width: 100%;
+}
 /* Custom Cursor */
 .cursor {
   width: 20px;
@@ -270,19 +276,31 @@ body {
 }
 
 /* Featured Post Section */
+
+/* Featured Post Section Fixes */
 .featured-section {
-  position: relative;
-  padding: 8rem 0;
-  background: var(--color-dark-800);
+    position: relative;
+    padding: 8rem 0;
+    background: var(--color-dark-800);
+    width: 100%;
 }
 
 .featured-grid {
-  display: grid;
-  grid-template-columns: repeat(12, 1fr);
-  gap: 2rem;
-  max-width: 1400px;
-  margin: 0 auto;
-  padding: 0 2rem;
+    max-width: 1400px;
+    margin: 0 auto;
+    padding: 0 2rem;
+    width: 100%;
+}
+
+.featured-post {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 2rem;
+    background: var(--color-dark-800);
+    border-radius: 20px;
+    overflow: hidden;
+    padding: 2rem;
+    width: 100%;
 }
 
 .featured-image {
@@ -350,8 +368,16 @@ body {
 
 /* Latest Posts Grid */
 .latest-posts {
-  padding: 8rem 0;
-  background: var(--color-dark);
+    padding: 8rem 0;
+    background: var(--color-dark);
+    width: 100%;
+}
+
+.posts-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+    gap: 2rem;
+    width: 100%;
 }
 
 .section-title {
@@ -372,14 +398,6 @@ body {
   transform: translateY(0);
 }
 
-.posts-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
-  gap: 2rem;
-  max-width: 1400px;
-  margin: 0 auto;
-  padding: 0 2rem;
-}
 
 .post-card {
   position: relative;
