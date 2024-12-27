@@ -97,74 +97,7 @@
     </footer>
 
     <script>
-       // Custom Cursor
-const cursor = document.querySelector('.cursor');
-const cursorFollower = document.querySelector('.cursor-follower');
-
-document.addEventListener('mousemove', (e) => {
-    cursor.style.left = e.clientX + 'px';
-    cursor.style.top = e.clientY + 'px';
-
-    setTimeout(() => {
-        cursorFollower.style.left = e.clientX + 'px';
-        cursorFollower.style.top = e.clientY + 'px';
-    }, 100);
-});
-
-// Navbar Hide on Scroll
-let lastScroll = 0;
-window.addEventListener('scroll', () => {
-    const currentScroll = window.pageYOffset;
-    const navbar = document.querySelector('.navbar');
-
-    if (currentScroll <= 0) {
-        navbar.classList.remove('hidden');
-        return;
-    }
-
-    if (currentScroll > lastScroll && !navbar.classList.contains('hidden')) {
-        navbar.classList.add('hidden');
-    } else if (currentScroll < lastScroll && navbar.classList.contains('hidden')) {
-        navbar.classList.remove('hidden');
-    }
-
-    lastScroll = currentScroll;
-});
-
-// Particle Effect
-function createParticles() {
-    const particles = document.getElementById('particles');
-    for (let i = 0; i < 50; i++) {
-        const particle = document.createElement('div');
-        particle.className = 'particle';
-        particle.style.left = Math.random() * 100 + 'vw';
-        particle.style.animationDelay = Math.random() * 20 + 's';
-        particles.appendChild(particle);
-    }
-}
-createParticles();
-
-// Intersection Observer for Animations
-const observer = new IntersectionObserver((entries) => {
-    entries.forEach(entry => {
-        if (entry.isIntersecting) {
-            entry.target.classList.add('visible');
-        }
-    });
-}, {
-    threshold: 0.1
-});
-
-document.querySelectorAll('.fade-in, .post-card, .section-title, .featured-image, .featured-content').forEach((el) => {
-    observer.observe(el);
-});
-// GitHub API and content settings
-const repoOwner = 'lawrence18365'; // Your GitHub username
-const repoName = 'sportsblog';  // Your repository name
-const postsDir = 'posts';      // Folder containing your posts
-const converter = new showdown.Converter(); // Markdown converter
-
-// Function to format dates
+    // Function to format dates consistently
 function formatDate(dateString) {
     return new Date(dateString).toLocaleDateString('en-US', {
         year: 'numeric',
@@ -173,144 +106,112 @@ function formatDate(dateString) {
     });
 }
 
-// Function to create HTML for featured post
+// Function to create HTML for the featured post
 function createFeaturedPost(post) {
-    const postContentHtml = converter.makeHtml(post.content);
-    return `
-        <div class="featured-image fade-in">
-            <img src="${post.image}" alt="${post.title}" loading="lazy">
-        </div>
-        <div class="featured-content fade-in">
-            <span class="category-badge">${post.category}</span>
-            <h2 class="featured-title">${post.title}</h2>
-            <div class="meta-info">
-                <span class="meta-item">
-                    <i class="far fa-calendar"></i>
-                    ${formatDate(post.date)}
-                </span>
-                <span class="meta-item">
-                    <i class="far fa-user"></i>
-                    ${post.author}
-                </span>
-            </div>
-            <p>${post.excerpt}</p>
-            ${postContentHtml} 
-            <a href="${post.html_url}" target="_blank" class="read-more">View on GitHub →</a>
-        </div>
-    `;
-}
-
-// Function to create HTML for a post card
-function createPostCard(post, index) {
-    const postContentHtml = converter.makeHtml(post.content);
-    return `
-        <article class="post-card fade-in" style="transition-delay: ${index * 0.1}s">
-            <img src="${post.image}" alt="${post.title}" class="post-image" loading="lazy">
-            <div class="post-content">
-                <span class="category-badge">${post.category}</span>
-                <h3 class="post-title">${post.title}</h3>
-                <div class="meta-info">
-                    <span class="meta-item">
-                        <i class="far fa-calendar"></i>
-                        ${formatDate(post.date)}
-                    </span>
+    const featured = document.getElementById('featured-post');
+    featured.innerHTML = `
+        <article class="featured-post">
+            <img src="${post.image}" alt="${post.title}">
+            <div class="featured-post-content">
+                <span class="category-tag">${post.category}</span>
+                <h2>${post.title}</h2>
+                <div class="post-meta">
+                    <span>${formatDate(post.date)}</span> | 
+                    <span>By ${post.author}</span>
                 </div>
                 <p>${post.excerpt}</p>
-                ${postContentHtml}
-                <a href="${post.html_url}" target="_blank" class="read-more">View on GitHub →</a>
+                <a href="${post.path}" class="read-more">Read Full Story →</a>
             </div>
         </article>
     `;
 }
 
-// Fetch posts from GitHub
-async function getPosts(repoOwner, repoName, postsDir) {
-    const apiUrl = `https://api.github.com/repos/${repoOwner}/${repoName}/contents/${postsDir}`;
-
-    try {
-        const response = await fetch(apiUrl);
-        if (!response.ok) {
-            throw new Error(`GitHub API error: ${response.status}`);
-        }
-
-        const data = await response.json();
-
-        // Filter for Markdown files and process them
-        const posts = await Promise.all(data
-            .filter(file => file.name.endsWith('.md'))
-            .map(async (file) => {
-                const postResponse = await fetch(file.download_url);
-                if (!postResponse.ok) {
-                    console.error(`Error fetching post ${file.name}:`, postResponse.status);
-                    return null;
-                }
-                const postContent = await postResponse.text();
-                const frontMatterMatch = postContent.match(/^---\n([\s\S]*?)\n---/);
-                const frontMatter = frontMatterMatch ? jsyaml.load(frontMatterMatch[1]) : {};
-
-                // Process image paths in Markdown content
-                const githubRawUrl = `https://raw.githubusercontent.com/${repoOwner}/${repoName}/main/${postsDir}/`;
-                let processedContent = postContent.replace(/!\[.*?\]\((.*?)\)/g, (match, imagePath) => {
-                    if (imagePath.startsWith('http')) {
-                        return match; // Absolute URL, no change
-                    }
-                    return match.replace(imagePath, `${githubRawUrl}${imagePath}`);
-                });
-
-                return {
-                    ...file,
-                    ...frontMatter,
-                    title: frontMatter.title || 'Untitled Post',
-                    excerpt: frontMatter.excerpt || 'No excerpt available',
-                    date: frontMatter.date || new Date().toISOString(),
-                    author: frontMatter.author || 'Anonymous',
-                    category: frontMatter.category || 'Uncategorized',
-                    image: frontMatter.image || 'placeholder.svg',
-                    content: processedContent // Markdown content with adjusted image paths
-                };
-            }));
-
-        // Filter out any null posts and sort by date
-        return posts.filter(post => post !== null).sort((a, b) => new Date(b.date) - new Date(a.date));
-
-    } catch (error) {
-        console.error('Error fetching or processing posts:', error);
-        return [];
-    }
+// Function to create HTML for a regular post card
+function createPostCard(post) {
+    return `
+        <article class="post-card">
+            <img src="${post.image}" alt="${post.title}">
+            <div class="post-content">
+                <span class="category-tag">${post.category}</span>
+                <h3>${post.title}</h3>
+                <div class="post-meta">
+                    <span>${formatDate(post.date)}</span>
+                </div>
+                <p>${post.excerpt}</p>
+                <a href="${post.path}" class="read-more">Read More →</a>
+            </div>
+        </article>
+    `;
 }
 
-// Initialize blog
+// Function to initialize the blog
 async function initializeBlog() {
-    const featuredPostContainer = document.getElementById('featured-post-container');
-    const postsGridContainer = document.getElementById('posts-grid-container');
-
-    // Show loading states (optional - improve with placeholders)
-    featuredPostContainer.innerHTML = '<div class="loading">Loading Featured Post...</div>';
-    postsGridContainer.innerHTML = '<div class="loading">Loading Posts...</div>';
+    const repoOwner = 'lawrence18365'; // Replace with your GitHub username
+    const repoName = 'sportsblog';  // Replace with your repository name
+    const postsDir = 'posts';
 
     try {
         const posts = await getPosts(repoOwner, repoName, postsDir);
 
-        if (posts.length === 0) {
-            throw new Error('No posts found');
+        // Find featured post (if you have a mechanism to designate a featured post)
+        const featuredPost = posts.find(post => post.featured); // Assuming you add a 'featured' property in your front matter
+        if (featuredPost) {
+            createFeaturedPost(featuredPost);
         }
 
-        // Featured post
-        const featuredPostData = posts.find(post => post.featured) || posts[0];
-        featuredPostContainer.innerHTML = createFeaturedPost(featuredPostData);
+        // Get non-featured posts and sort by date
+        const regularPosts = posts
+            .filter(post => !post.featured)
+            .sort((a, b) => new Date(b.date) - new Date(a.date));
 
-        // Regular posts (exclude featured post)
-        const regularPosts = posts.filter(post => post !== featuredPostData);
-        postsGridContainer.innerHTML = regularPosts.map(createPostCard).join('');
-
+        // Populate posts grid
+        const postsGrid = document.getElementById('postsGrid');
+        postsGrid.innerHTML = ''; // Clear existing posts
+        regularPosts.forEach(post => {
+            postsGrid.innerHTML += createPostCard(post);
+        });
     } catch (error) {
         console.error('Error initializing blog:', error);
-        featuredPostContainer.innerHTML = '<div class="error">Error loading featured post.</div>';
-        postsGridContainer.innerHTML = '<div class="error">Error loading posts.</div>';
+        document.getElementById('postsGrid').innerHTML = '<p>Error loading posts.</p>';
     }
 }
 
-// Call initializeBlog on DOMContentLoaded
+// Function to fetch and parse posts from GitHub
+async function getPosts(repoOwner, repoName, postsDir) {
+    const apiUrl = `https://api.github.com/repos/${repoOwner}/${repoName}/contents/${postsDir}`;
+    
+    const response = await fetch(apiUrl);
+    const data = await response.json();
+
+    // Fetch and parse front matter for each post
+    const postsWithMetadata = await Promise.all(data.map(async (post) => {
+        if (!post.name.endsWith('.html')) return null;
+
+        const postUrl = post.download_url;
+        const postResponse = await fetch(postUrl);
+        const postContent = await postResponse.text();
+
+        // Extract front matter using js-yaml
+        const frontMatterMatch = postContent.match(/^---([\s\S]*?)---/);
+        const frontMatter = frontMatterMatch ? jsyaml.load(frontMatterMatch[1]) : {};
+
+        // Get latest commit date for sorting
+        const commitUrl = `https://api.github.com/repos/${repoOwner}/${repoName}/commits?path=${postsDir}/${post.name}`;
+        const commitResponse = await fetch(commitUrl);
+        const commitData = await commitResponse.json();
+        const commitDate = commitData[0]?.commit?.committer?.date || '';
+
+        return { 
+            ...post, 
+            ...frontMatter, 
+            commitDate,
+            path: `${postsDir}/${post.name}` // Add path property
+        };
+    }));
+
+    return postsWithMetadata.filter(post => post !== null);
+}
+// Run initialization when DOM is loaded
 document.addEventListener('DOMContentLoaded', initializeBlog);
     </script>
 </body>
