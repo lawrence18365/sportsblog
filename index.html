@@ -6,7 +6,7 @@
     <title>The Sideline Satirist - Premium Sports Satire</title>
     <link rel="stylesheet" href="css/style.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;500;600;700;800;900&family=Montserrat:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
 </head>
 <body>
     <nav class="navbar">
@@ -31,47 +31,69 @@
         </div>
     </header>
 
-    <main class="container">
-        <section id="featured-post" class="slide-in"></section>
-        <section id="latest-posts" class="slide-in">
-            <h2>Latest Stories</h2>
-            <div class="posts-grid" id="postsGrid"></div>
+    <main>
+        <div class="container">
+            <section id="featured-post" class="slide-in"></section>
+        </div>
+
+        <section class="latest-posts">
+            <div class="container">
+                <h2 class="section-title">Latest Stories</h2>
+                <div class="posts-grid" id="postsGrid"></div>
+            </div>
         </section>
     </main>
 
     <footer>
         <div class="container">
             <div class="footer-content">
-                <div class="footer-section brand">
+                <div class="footer-section">
                     <h3>The Sideline Satirist</h3>
                     <p>Making sports funny since whenever we started doing this.</p>
-                </div>
-                <div class="footer-section links">
-                    <h3>Quick Links</h3>
-                    <ul>
-                        <li><a href="categories.html">Categories</a></li>
-                        <li><a href="about.html">About Us</a></li>
-                        <li><a href="#">Subscribe</a></li>
-                    </ul>
-                </div>
-                <div class="footer-section social">
-                    <h3>Connect</h3>
                     <div class="social-links">
                         <a href="#" aria-label="Twitter"><i class="fab fa-twitter"></i></a>
                         <a href="#" aria-label="Facebook"><i class="fab fa-facebook"></i></a>
                         <a href="#" aria-label="Instagram"><i class="fab fa-instagram"></i></a>
                     </div>
                 </div>
+                <div class="footer-section">
+                    <h3>Quick Links</h3>
+                    <ul>
+                        <li><a href="categories.html">Categories</a></li>
+                        <li><a href="about.html">About Us</a></li>
+                        <li><a href="#">Subscribe</a></li>
+                        <li><a href="#">Contact</a></li>
+                    </ul>
+                </div>
+                <div class="footer-section">
+                    <h3>Categories</h3>
+                    <ul>
+                        <li><a href="#">Football</a></li>
+                        <li><a href="#">Basketball</a></li>
+                        <li><a href="#">Baseball</a></li>
+                        <li><a href="#">Soccer</a></li>
+                    </ul>
+                </div>
             </div>
-        </div>
-        <div class="footer-bottom">
-            <p>&copy; 2024 The Sideline Satirist. All rights probably reserved.</p>
+            <div class="footer-bottom">
+                <p>&copy; 2024 The Sideline Satirist. All rights probably reserved.</p>
+            </div>
         </div>
     </footer>
 
     <script src="https://cdnjs.cloudflare.com/ajax/libs/js-yaml/4.1.0/js-yaml.min.js"></script>
     <script>
-        // Function to format dates consistently
+        // Navbar scroll effect
+        window.addEventListener('scroll', () => {
+            const navbar = document.querySelector('.navbar');
+            if (window.scrollY > 50) {
+                navbar.classList.add('scrolled');
+            } else {
+                navbar.classList.remove('scrolled');
+            }
+        });
+
+        // Rest of your JavaScript remains the same
         function formatDate(dateString) {
             return new Date(dateString).toLocaleDateString('en-US', {
                 year: 'numeric',
@@ -80,7 +102,6 @@
             });
         }
 
-        // Function to create HTML for the featured post
         function createFeaturedPost(post) {
             const featured = document.getElementById('featured-post');
             featured.innerHTML = `
@@ -100,12 +121,11 @@
             `;
         }
 
-        // Function to create HTML for a regular post card
         function createPostCard(post) {
             return `
                 <article class="post-card">
                     <img src="${post.image}" alt="${post.title}" loading="lazy">
-                    <div class="post-content">
+                    <div class="post-card-content">
                         <span class="category-tag">${post.category}</span>
                         <h3>${post.title}</h3>
                         <div class="post-meta">
@@ -118,29 +138,25 @@
             `;
         }
 
-        // Function to initialize the blog
+        // Your existing initialization code remains the same
         async function initializeBlog() {
-            const repoOwner = 'lawrence18365'; // Replace with your GitHub username
-            const repoName = 'sportsblog';  // Replace with your repository name
+            const repoOwner = 'lawrence18365';
+            const repoName = 'sportsblog';
             const postsDir = 'posts';
 
             try {
                 const posts = await getPosts(repoOwner, repoName, postsDir);
-
-                // Find featured post (if you have a mechanism to designate a featured post)
-                const featuredPost = posts.find(post => post.featured); // Assuming you add a 'featured' property in your front matter
+                const featuredPost = posts.find(post => post.featured);
                 if (featuredPost) {
                     createFeaturedPost(featuredPost);
                 }
 
-                // Get non-featured posts and sort by date
                 const regularPosts = posts
                     .filter(post => !post.featured)
                     .sort((a, b) => new Date(b.date) - new Date(a.date));
 
-                // Populate posts grid
                 const postsGrid = document.getElementById('postsGrid');
-                postsGrid.innerHTML = ''; // Clear existing posts
+                postsGrid.innerHTML = '';
                 regularPosts.forEach(post => {
                     postsGrid.innerHTML += createPostCard(post);
                 });
@@ -150,14 +166,13 @@
             }
         }
 
-        // Function to fetch and parse posts from GitHub
+        // Your existing getPosts function remains the same
         async function getPosts(repoOwner, repoName, postsDir) {
             const apiUrl = `https://api.github.com/repos/${repoOwner}/${repoName}/contents/${postsDir}`;
             
             const response = await fetch(apiUrl);
             const data = await response.json();
 
-            // Fetch and parse front matter for each post
             const postsWithMetadata = await Promise.all(data.map(async (post) => {
                 if (!post.name.endsWith('.html')) return null;
 
@@ -165,11 +180,9 @@
                 const postResponse = await fetch(postUrl);
                 const postContent = await postResponse.text();
 
-                // Extract front matter using js-yaml
                 const frontMatterMatch = postContent.match(/^---([\s\S]*?)---/);
                 const frontMatter = frontMatterMatch ? jsyaml.load(frontMatterMatch[1]) : {};
 
-                // Get latest commit date for sorting
                 const commitUrl = `https://api.github.com/repos/${repoOwner}/${repoName}/commits?path=${postsDir}/${post.name}`;
                 const commitResponse = await fetch(commitUrl);
                 const commitData = await commitResponse.json();
@@ -179,14 +192,13 @@
                     ...post, 
                     ...frontMatter, 
                     commitDate,
-                    path: `${postsDir}/${post.name}` // Add path property
+                    path: `${postsDir}/${post.name}`
                 };
             }));
 
             return postsWithMetadata.filter(post => post !== null);
         }
 
-        // Run initialization when DOM is loaded
         document.addEventListener('DOMContentLoaded', initializeBlog);
     </script>
 </body>
