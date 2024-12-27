@@ -113,39 +113,57 @@ function formatDate(dateString) {
     });
 }
 
+// Function to create slug from title
+function createSlug(title) {
+    return title
+        .toLowerCase()
+        .replace(/[^\w\s-]/g, '')
+        .replace(/\s+/g, '-');
+}
+
 // Function to create HTML for the featured post
 function createFeaturedPost(post) {
+    const postUrl = `${config.postsDir}/${post.name}`;
     return `
         <article class="featured-post">
-            <img src="${post.image}" alt="${post.title}">
-            <div class="featured-post-content">
-                <span class="category-tag">${post.category}</span>
-                <h2>${post.title}</h2>
-                <div class="post-meta">
-                    <span><i class="far fa-calendar"></i> ${formatDate(post.date)}</span>
-                    <span><i class="far fa-user"></i> By ${post.author}</span>
+            <a href="${postUrl}" class="featured-post-link">
+                <div class="featured-image-wrapper">
+                    <img src="${post.image}" alt="${post.title}" class="featured-image">
                 </div>
-                <p>${post.excerpt}</p>
-                <a href="${post.path}" class="read-more">Read Full Story →</a>
-            </div>
+                <div class="featured-post-content">
+                    <span class="category-tag">${post.category}</span>
+                    <h2>${post.title}</h2>
+                    <div class="post-meta">
+                        <span><i class="far fa-calendar"></i> ${formatDate(post.date)}</span>
+                        <span><i class="far fa-user"></i> By ${post.author}</span>
+                    </div>
+                    <p>${post.excerpt}</p>
+                    <span class="read-more">Read Full Story →</span>
+                </div>
+            </a>
         </article>
     `;
 }
 
 // Function to create HTML for a regular post card
 function createPostCard(post) {
+    const postUrl = `${config.postsDir}/${post.name}`;
     return `
         <article class="post-card">
-            <img src="${post.image}" alt="${post.title}">
-            <div class="post-content">
-                <span class="category-tag">${post.category}</span>
-                <h3>${post.title}</h3>
-                <div class="post-meta">
-                    <span>${formatDate(post.date)}</span>
+            <a href="${postUrl}" class="post-card-link">
+                <div class="post-image-wrapper">
+                    <img src="${post.image}" alt="${post.title}" class="post-image">
                 </div>
-                <p>${post.excerpt}</p>
-                <a href="${post.path}" class="read-more">Read More →</a>
-            </div>
+                <div class="post-content">
+                    <span class="category-tag">${post.category}</span>
+                    <h3>${post.title}</h3>
+                    <div class="post-meta">
+                        <span>${formatDate(post.date)}</span>
+                    </div>
+                    <p>${post.excerpt}</p>
+                    <span class="read-more">Read More →</span>
+                </div>
+            </a>
         </article>
     `;
 }
@@ -154,42 +172,30 @@ function createPostCard(post) {
 async function getPosts() {
     try {
         const apiUrl = `https://api.github.com/repos/${config.repoOwner}/${config.repoName}/contents/${config.postsDir}`;
-        console.log('Fetching from URL:', apiUrl);
-        
         const response = await fetch(apiUrl);
-        console.log('API Response status:', response.status);
         
         if (!response.ok) {
-            const errorText = await response.text();
-            console.error('GitHub API error details:', errorText);
             throw new Error(`GitHub API error: ${response.status}`);
         }
 
         const data = await response.json();
-        console.log('Files found in directory:', data.map(file => file.name));
-
         const postsWithMetadata = await Promise.all(data.map(async (post) => {
             try {
                 const postUrl = post.download_url;
                 const postResponse = await fetch(postUrl);
                 
                 if (!postResponse.ok) {
-                    console.error(`Error fetching post ${post.name}:`, postResponse.status);
-                    return null;
+                    throw new Error(`Error fetching post: ${post.name}`);
                 }
                 
                 const postContent = await postResponse.text();
-
-                // Extract front matter
                 const frontMatterMatch = postContent.match(/^---([\s\S]*?)---/);
+                
                 if (!frontMatterMatch) {
-                    console.warn(`No front matter found in ${post.name}`);
-                    return null;
+                    throw new Error(`No front matter found in ${post.name}`);
                 }
 
-                console.log(`Front matter found in ${post.name}:`, frontMatterMatch[1]);
                 const frontMatter = jsyaml.load(frontMatterMatch[1]);
-
                 return { 
                     ...post, 
                     ...frontMatter,
@@ -198,8 +204,7 @@ async function getPosts() {
                     date: frontMatter.date || new Date().toISOString(),
                     author: frontMatter.author || 'Anonymous',
                     category: frontMatter.category || 'Uncategorized',
-                    image: frontMatter.image || '/placeholder.svg?height=400&width=600',
-                    path: `${config.postsDir}/${post.name}`
+                    image: frontMatter.image || '/placeholder.svg?height=400&width=600'
                 };
             } catch (error) {
                 console.error(`Error processing post ${post.name}:`, error);
@@ -207,9 +212,9 @@ async function getPosts() {
             }
         }));
 
-        const validPosts = postsWithMetadata.filter(post => post !== null);
-        console.log('Valid posts processed:', validPosts.length);
-        return validPosts.sort((a, b) => new Date(b.date) - new Date(a.date));
+        return postsWithMetadata
+            .filter(post => post !== null)
+            .sort((a, b) => new Date(b.date) - new Date(a.date));
 
     } catch (error) {
         console.error('Error in getPosts:', error);
@@ -218,69 +223,89 @@ async function getPosts() {
 }
 
 // Function to initialize the blog
-// Function to initialize the blog
 async function initializeBlog() {
     const postsGridContainer = document.getElementById('posts-grid-container');
     const featuredPostContainer = document.getElementById('featured-post-container');
 
-    // Show loading states
-    if (featuredPostContainer) {
-        featuredPostContainer.innerHTML = '<div class="loading">Loading featured post...</div>';
-    }
-    if (postsGridContainer) {
-        postsGridContainer.innerHTML = '<div class="loading">Loading posts...</div>';
-    }
-
     try {
-        console.log('Starting blog initialization...');
         const posts = await getPosts();
-        console.log('Posts retrieved:', posts);
 
         if (!posts || posts.length === 0) {
             throw new Error('No posts found');
         }
 
-        // Find featured post or use the first post
+        // Featured post
         const featuredPost = posts.find(post => post.featured) || posts[0];
         if (featuredPost && featuredPostContainer) {
-            // Create and assign the featured post HTML to the container
             featuredPostContainer.innerHTML = createFeaturedPost(featuredPost);
-            console.log('Featured post loaded:', featuredPost.title);
         }
 
-        // Get non-featured posts
-        const regularPosts = posts
-            .filter(post => post !== featuredPost)
-            .sort((a, b) => new Date(b.date) - new Date(a.date));
-
-        // Update posts grid
+        // Regular posts
+        const regularPosts = posts.filter(post => post !== featuredPost);
         if (postsGridContainer) {
             postsGridContainer.innerHTML = regularPosts.length > 0 
                 ? regularPosts.map(post => createPostCard(post)).join('')
                 : '<p>No posts found.</p>';
-            console.log('Regular posts loaded:', regularPosts.length);
         }
 
     } catch (error) {
         console.error('Error initializing blog:', error);
-        
-        if (featuredPostContainer) {
-            featuredPostContainer.innerHTML = `<div class="error">Error loading featured post: ${error.message}</div>`;
-        }
-        if (postsGridContainer) {
-            postsGridContainer.innerHTML = `<div class="error">Error loading posts: ${error.message}</div>`;
-        }
+        const errorMessage = `<div class="error">Error loading posts: ${error.message}</div>`;
+        if (featuredPostContainer) featuredPostContainer.innerHTML = errorMessage;
+        if (postsGridContainer) postsGridContainer.innerHTML = errorMessage;
     }
 }
 
-// Add required styles
+// Add required styles for clickable cards
 const styles = document.createElement('style');
 styles.textContent = `
-    .loading {
-        text-align: center;
-        padding: 2rem;
+    .featured-post-link,
+    .post-card-link {
+        display: block;
+        text-decoration: none;
+        color: inherit;
+        height: 100%;
+        transition: all 0.3s var(--transition-smooth);
+    }
+
+    .featured-post-link:hover,
+    .post-card-link:hover {
+        transform: translateY(-5px);
+    }
+
+    .featured-image-wrapper,
+    .post-image-wrapper {
+        overflow: hidden;
+        border-radius: 10px;
+    }
+
+    .featured-image,
+    .post-image {
+        transition: transform 0.3s var(--transition-smooth);
+    }
+
+    .featured-post-link:hover .featured-image,
+    .post-card-link:hover .post-image {
+        transform: scale(1.05);
+    }
+
+    .read-more {
         color: var(--color-accent);
-        font-size: 1.2rem;
+        font-weight: 600;
+        display: inline-flex;
+        align-items: center;
+        margin-top: 1rem;
+    }
+
+    .read-more::after {
+        content: '→';
+        margin-left: 0.5rem;
+        transition: transform 0.3s var(--transition-smooth);
+    }
+
+    .featured-post-link:hover .read-more::after,
+    .post-card-link:hover .read-more::after {
+        transform: translateX(5px);
     }
 
     .error {
@@ -288,11 +313,14 @@ styles.textContent = `
         padding: 2rem;
         color: #ff3c00;
         font-size: 1.2rem;
+        background: rgba(255, 60, 0, 0.1);
+        border-radius: 10px;
+        margin: 1rem 0;
     }
 `;
 document.head.appendChild(styles);
 
-// Run initialization when DOM is loaded
+// Initialize when DOM is loaded
 document.addEventListener('DOMContentLoaded', initializeBlog);
 </script>
 </body>
